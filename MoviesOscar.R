@@ -67,12 +67,42 @@ library(adabag);
 
 trainc$Start_Tech_Oscar <- as.factor(trainc$Start_Tech_Oscar)
 
-adaboost <- boosting(Start_Tech_Oscar~., data=trainc, boos=TRUE,mfinal=1000)
+adaboost <- boosting(Start_Tech_Oscar~., data=trainc, boos=TRUE,mfinal=10)
 
 predada <- predict(adaboost,testc)
 table(predada$class,testc$Start_Tech_Oscar)
 70/113
 77/113
+
+
+#XGBOOST
+
+# install.packages("xgboost")
+library(xgboost)
+
+trainY = trainc$Start_Tech_Oscar == "1"
+
+
+trainX <- model.matrix(Start_Tech_Oscar ~ .-1, data = trainc)
+trainX <- trainX[,-12]
+
+testY = testc$Start_Tech_Oscar == "1"
+
+testX <- model.matrix(Start_Tech_Oscar ~ .-1, data = testc)
+testX <- testX[,-12]
+#delete additional variable
+
+Xmatrix <- xgb.DMatrix(data = trainX, label= trainY)
+Xmatrix_t <- xgb.DMatrix(data = testX, label = testY)
+
+Xgboosting <- xgboost(data = Xmatrix, # the data   
+                      nround = 50, # max number of boosting iterations
+                      objective = "multi:softmax",eta = 0.3, num_class = 2, max_depth = 10)
+
+xgpred <- predict(Xgboosting, Xmatrix_t)
+table(testY, xgpred)
+
+74/113
 
 t1<-adaboost$trees[[1]]
 plot(t1)
